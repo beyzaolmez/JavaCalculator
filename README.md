@@ -1,55 +1,84 @@
 # JavaCalculator
 
-A basic command-line calculator application written in Java.
+A command-line calculator application written in Java.
 
 ## Features
 
-- Addition (`+`)
-- Subtraction (`-`)
-- Multiplication (`*`)
-- Division (`/`)
-- Modulus (`%`)
-- Division-by-zero error handling
-- Clean integer display (e.g. `6` instead of `6.0`)
+- **Operators**: `+` `-` `*` `/` `%` `^` (power)
+- **Unary**: `sqrt(x)` — square root
+- **`ans` keyword** — reuse the last result in the next expression
+- **History** — view all past calculations with the `history` command
+- **No-spaces input** — `3+5` and `3 + 5` both work
+- **Decimal precision** — results rounded to 6 decimal places, trailing zeros trimmed
+- **Error handling** — divide-by-zero, sqrt of negative number
 
 ## Project Structure
 
 ```
 JavaCalculator/
-└── src/
-    ├── Calculator.java   # Core arithmetic logic
-    └── Main.java         # Interactive CLI entry point
+├── pom.xml
+├── src/
+│   ├── Calculator.java        # Core arithmetic methods
+│   ├── Operation.java         # Enum mapping symbols to operations
+│   ├── InputParser.java       # Regex-based expression parser
+│   ├── ParsedExpression.java  # Data class for parsed input
+│   └── Main.java              # Interactive CLI entry point
+└── test/
+    └── CalculatorTest.java    # JUnit 5 unit tests
 ```
 
 ## Requirements
 
 - Java 8 or higher
+- Maven 3.x (for dependency management and tests)
 
 ## How to Run
 
-**Compile:**
+**With Maven (recommended):**
 ```bash
-javac src/Calculator.java src/Main.java -d out
+mvn compile
+mvn exec:java -Dexec.mainClass=Main
 ```
 
-**Run:**
+**With plain javac:**
 ```bash
+javac src/*.java -d out
 java -cp out Main
+```
+
+## How to Test
+
+```bash
+mvn test
 ```
 
 ## Usage
 
 ```
 === Java Calculator ===
-Operators: + | - | * | / | %
-Type 'exit' to quit.
+Operators : + | - | * | / | % | ^
+Unary     : sqrt(x)
+Special   : 'ans' reuses last result, 'history' shows history, 'exit' quits
 
-Enter expression (e.g. 3 + 5): 10 / 4
-Result: 10 / 4 = 2.5
+> 10 / 4
+= 2.5
 
-Enter expression (e.g. 3 + 5): 9 % 4
-Result: 9 % 4 = 1
+> ans * 2
+= 5
 
-Enter expression (e.g. 3 + 5): exit
+> 2^8
+= 256
+
+> sqrt(144)
+= 12
+
+> history
+--- History ---
+  1. 10 / 4 = 2.5
+  2. 2.5 * 2 = 5
+  3. 2 ^ 8 = 256
+  4. sqrt(144) = 12
+
+> exit
 Goodbye!
 ```

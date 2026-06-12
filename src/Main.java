@@ -1,69 +1,90 @@
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 public class Main {
 
+    private static final int DECIMAL_PLACES = 6;
+
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         Calculator calculator = new Calculator();
+        List<String> history = new ArrayList<>();
+        double lastResult = 0;
 
         System.out.println("=== Java Calculator ===");
-        System.out.println("Operators: + | - | * | / | %");
-        System.out.println("Type 'exit' to quit.\n");
+        System.out.println("Operators : + | - | * | / | % | ^");
+        System.out.println("Unary     : sqrt(x)");
+        System.out.println("Special   : 'ans' reuses last result, 'history' shows history, 'exit' quits\n");
 
         while (true) {
-            System.out.print("Enter expression (e.g. 3 + 5): ");
+            System.out.print("> ");
             String input = scanner.nextLine().trim();
+
+            if (input.isEmpty()) continue;
 
             if (input.equalsIgnoreCase("exit")) {
                 System.out.println("Goodbye!");
                 break;
             }
 
-            String[] parts = input.split("\\s+");
-            if (parts.length != 3) {
-                System.out.println("Invalid input. Please use format: <number> <operator> <number>\n");
+            if (input.equalsIgnoreCase("history")) {
+                if (history.isEmpty()) {
+                    System.out.println("No history yet.\n");
+                } else {
+                    System.out.println("--- History ---");
+                    for (int i = 0; i < history.size(); i++) {
+                        System.out.printf("  %d. %s%n", i + 1, history.get(i));
+                    }
+                    System.out.println();
+                }
                 continue;
             }
 
-            double a, b;
-            try {
-                a = Double.parseDouble(parts[0]);
-                b = Double.parseDouble(parts[2]);
-            } catch (NumberFormatException e) {
-                System.out.println("Invalid numbers. Please try again.\n");
+            ParsedExpression expr = InputParser.parse(input, lastResult);
+            if (expr == null) {
+                System.out.println("Invalid input. Examples: 3+5, 10/4, 2^8, sqrt(9), ans*2\n");
                 continue;
             }
 
-            String operator = parts[1];
             double result;
-
+            String entry;
             try {
-                switch (operator) {
-                    case "+": result = calculator.add(a, b);      break;
-                    case "-": result = calculator.subtract(a, b); break;
-                    case "*": result = calculator.multiply(a, b); break;
-                    case "/": result = calculator.divide(a, b);   break;
-                    case "%": result = calculator.modulus(a, b);  break;
-                    default:
-                        System.out.println("Unknown operator '" + operator + "'. Use +, -, *, /, or %.\n");
+                if ("sqrt".equals(expr.operator)) {
+                    result = calculator.sqrt(expr.a);
+                    entry = String.format("sqrt(%s) = %s", format(expr.a), format(result));
+                } else {
+                    Operation op = Operation.fromSymbol(expr.operator);
+                    if (op == null) {
+                        System.out.println("Unknown operator: " + expr.operator + "\n");
                         continue;
+                    }
+                    result = op.apply(expr.a, expr.b);
+                    entry = String.format("%s %s %s = %s",
+                            format(expr.a), expr.operator, format(expr.b), format(result));
                 }
             } catch (ArithmeticException e) {
                 System.out.println("Error: " + e.getMessage() + "\n");
                 continue;
             }
 
-            System.out.printf("Result: %s %s %s = %s%n%n",
-                    format(a), operator, format(b), format(result));
+            lastResult = result;
+            history.add(entry);
+            System.out.println("= " + format(result) + "\n");
         }
 
         scanner.close();
     }
 
-    private static String format(double value) {
-        if (value == Math.floor(value) && !Double.isInfinite(value)) {
-            return String.valueOf((long) value);
+    static String format(double value) {
+        double rounded = Math.round(value * Math.pow(10, DECIMAL_PLACES)) / Math.pow(10, DECIMAL_PLACES);
+        if (rounded == Math.floor(rounded) && !Double.isInfinite(rounded)) {
+            return String.valueOf((long) rounded);
         }
-        return String.valueOf(value);
+        String s = String.valueOf(rounded);
+        if (s.contains(".")) {
+            s = s.replaceAll("0+$", "").replaceAll("\\.$", "");
+        }
+        return s;
     }
 }
